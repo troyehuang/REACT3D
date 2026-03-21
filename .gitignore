@@ -1,0 +1,3 @@
+*.pth
+*.log
+.DS_Store
