@@ -99,10 +99,10 @@ def find_largest_vertical_plane(ply_path,
 
 def extract_and_save_plane_mesh(orig_mesh_path, plane_idx, save_path):
     """
-    从原始三角网格中提取出 plane_idx 顶点对应的子网格（包含所有三个顶点都在 plane_idx 中的三角面），
-    并保存为 PLY。
+    Extract the sub-mesh corresponding to plane_idx vertices from the original triangle mesh (including all triangles where all three vertices are in plane_idx),
+    and save it as PLY.
     """
-    # 1. 读入原始 mesh
+    # 1. Read original mesh
     mesh = o3d.io.read_triangle_mesh(orig_mesh_path)
     verts = np.asarray(mesh.vertices)
     tris = np.asarray(mesh.triangles)
@@ -112,17 +112,17 @@ def extract_and_save_plane_mesh(orig_mesh_path, plane_idx, save_path):
         colors = np.asarray(mesh.vertex_colors)
         has_colors = True
 
-    # 2. 构建一个快速查表：old_idx -> new_idx
+    # 2. Build a fast lookup table: old_idx -> new_idx
     idx_map = {old_idx: new_idx for new_idx, old_idx in enumerate(plane_idx)}
 
-    # 3. 找出所有三个顶点都在 plane_idx 集合中的三角面
+    # 3. Find all triangles where all three vertices are in the plane_idx set
     mask = np.all(np.isin(tris, plane_idx), axis=1)
     tris_sel = tris[mask]
 
-    # 4. 重新编号三角面顶点索引
+    # 4. Renumber triangle vertex indices
     tris_new = np.array([[idx_map[v] for v in tri] for tri in tris_sel], dtype=np.int32)
 
-    # 5. 构建子网格并保存
+    # 5. Build sub-mesh and save
     mesh_plane = o3d.geometry.TriangleMesh()
     mesh_plane.vertices = o3d.utility.Vector3dVector(verts[plane_idx])
     mesh_plane.triangles = o3d.utility.Vector3iVector(tris_new)

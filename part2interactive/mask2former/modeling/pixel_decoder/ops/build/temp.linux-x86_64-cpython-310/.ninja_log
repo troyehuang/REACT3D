@@ -1,0 +1,4 @@
+# ninja log v5
+1	7564	1732061729212750493	/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/src/cpu/ms_deform_attn_cpu.o	5793b2a6f0ea16d5
+2	20444	1732061742097828418	/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/src/vision.o	9e42265eca6f3996
+1	25050	1732061746662856020	/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/home/troye/opdmulti-demo/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.o	812f387ed728ba17

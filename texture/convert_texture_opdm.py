@@ -98,13 +98,13 @@ def convert_glb_to_obj(glb_path: Path, out_dir: Path) -> Path:
 
 def scene_to_single_mesh(scene_or_mesh: trimesh.Scene) -> trimesh.Trimesh:
     """
-    无论 GLB 读出来是 Scene 还是 Trimesh，都统一成一个 Trimesh。
-    多几何就合并；保留原始拓扑与 UV。
+    Whether GLB is loaded as Scene or Trimesh, unify it into a Trimesh.
+    Merge multiple geometries; preserve original topology and UVs.
     """
     if isinstance(scene_or_mesh, trimesh.Trimesh):
         return scene_or_mesh
 
-    # Scene → 合并所有 geometry
+    # Scene -> Merge all geometries
     if not isinstance(scene_or_mesh, trimesh.Scene):
         raise TypeError(f"Unsupported type: {type(scene_or_mesh)}")
 
@@ -115,7 +115,7 @@ def scene_to_single_mesh(scene_or_mesh: trimesh.Scene) -> trimesh.Trimesh:
     if len(geoms) == 1:
         return geoms[0]
 
-    # 将多几何合并（会处理索引偏移；保留 per-vertex UV/颜色等）
+    # Merge multiple geometries (handles index offsets; preserves per-vertex UV/color etc.)
     merged = trimesh.util.concatenate(geoms)
     return merged
 
@@ -125,15 +125,15 @@ def convert_glb_to_obj_with_normals(glb_path: Path, out_obj_path: Path) -> None:
     out_obj_path = Path(out_obj_path).expanduser().resolve()
     out_obj_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 加载 GLB；尽量读成 mesh，若是多几何则合并
-    # 这里不加 process=True，避免读入时重算法线等副作用
+    # Load GLB; try to load as mesh, merge if multiple geometries
+    # Do not add process=True here to avoid side effects like recalculating normals on read
     scene_or_mesh = trimesh.load(str(glb_path), force='scene', process=False)
     mesh = scene_to_single_mesh(scene_or_mesh)
 
-    # 注意：这里不调用 mesh.fix_normals()，目的是**保留文件内自带的 normal**
-    # 如果你想在“无 normal”时改为计算并导出，可以在外层判断里调用 mesh.fix_normals()
+    # Note: mesh.fix_normals() is not called here to **preserve the original normals in the file**
+    # If you want to compute and export when there are "no normals", you can call mesh.fix_normals() in the outer condition
 
-    # 强制导出带法线与纹理
+    # Force export with normals and textures
     mesh.export(
         str(out_obj_path),
         file_type='obj',

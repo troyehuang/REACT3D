@@ -9,14 +9,14 @@ def build_opengl_proj_from_intrinsics(K, W, H, near=0.1, far=3.0):
     fx, fy = K[0,0], K[1,1]
     cx, cy = K[0,2], K[1,2]
 
-    # 把像素坐标系映射到 NDC (-1…+1)
-    # x_ndc = (u/cx - 1) 之类，推导后：
+    # Map pixel coordinate system to NDC (-1...+1)
+    # x_ndc = (u/cx - 1) etc, after derivation:
     A =  2.0 * fx / W
     B =  2.0 * fy / H
     C =  2.0 * (cx / W) - 1.0
     D = -2.0 * (cy / H) + 1.0
 
-    # 深度映射
+    # Depth mapping
     E = -(far + near) / (far - near)
     F = -2.0 * far * near / (far - near)
 
@@ -47,14 +47,14 @@ def visualize_masks(valid: np.ndarray,
                     cmap = 'gray',
                     titles = ('Valid', 'Binary Mask', 'Overlay')):
     """
-    并排可视化 valid、binary_mask 以及它们的叠加效果。
+    Visualize valid, binary_mask, and their overlay side by side.
 
     Args:
-        valid (np.ndarray): 网格投影得到的布尔 mask，shape (H, W)。
-        binary_mask (np.ndarray): SAM 二值 mask，经 resize 后，shape (H, W)。
-        figsize (tuple): 整个 figure 的尺寸。
-        cmap (str): 单通道图使用的 colormap。
-        titles (tuple): 三个子图的标题。
+        valid (np.ndarray): Boolean mask obtained by mesh projection, shape (H, W).
+        binary_mask (np.ndarray): SAM binary mask after resize, shape (H, W).
+        figsize (tuple): Size of the entire figure.
+        cmap (str): colormap used for single-channel images.
+        titles (tuple): Titles for the three subplots.
     """
     fig, axes = plt.subplots(1, 3, figsize=figsize)
 
@@ -68,10 +68,10 @@ def visualize_masks(valid: np.ndarray,
     axes[1].set_title(titles[1])
     axes[1].axis('off')
 
-    # 3. Overlay: valid 红色, binary_mask 蓝色
+    # 3. Overlay: valid red, binary_mask blue
     overlay = np.zeros((*valid.shape, 3), dtype=np.float32)
-    overlay[..., 0] = valid.astype(float)       # R 通道
-    overlay[..., 2] = binary_mask.astype(float) # B 通道
+    overlay[..., 0] = valid.astype(float)       # R channel
+    overlay[..., 2] = binary_mask.astype(float) # B channel
     axes[2].imshow(overlay)
     axes[2].set_title(titles[2])
     axes[2].axis('off')

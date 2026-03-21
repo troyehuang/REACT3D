@@ -67,12 +67,12 @@ def ensure_dotline_format(text: str) -> bool:
 
 def parse_and_clean_response(resp_text: str, input_classes: list):
     """
-    规则：
-    1) 常规条目必须以 ' door' 结尾，且去掉 ' door' 后的 base 要在 input_classes 里
-    2) 去重并保持顺序
-    3) 清洗完成后，如果列表里没有精确等于 'door' 的条目，则在列表末尾追加 'door'
-    4) 最后再检查 input_classes，把 normalize 后以 ' door' 结尾的类补充进 cleaned（若还没存在）
-    返回: cleaned_items(list[str]), cleaned_dotline(str)
+    Rules:
+    1) Regular items must end with ' door', and the base without ' door' must be in input_classes
+    2) Deduplicate and maintain order
+    3) After cleaning, if there is no exact 'door' item, append 'door' to the end of the list
+    4) Finally, check input_classes, supplement normalized classes ending with ' door' to cleaned (if not already there)
+    Returns: cleaned_items(list[str]), cleaned_dotline(str)
     """
     raw_items = extract_items_from_dotstring(resp_text)
 
@@ -85,15 +85,15 @@ def parse_and_clean_response(resp_text: str, input_classes: list):
             continue
         base = re.sub(r"\s+door$", "", it_norm).strip()
         if base in input_norm and it_norm not in seen:
-            cleaned.append(it_norm)   # 👈 保留 normalize 后的版本
+            cleaned.append(it_norm)   # preserve the normalized version
             seen.add(it_norm)
 
-    # 若没有“door”这个裸项，则补上
+    # If the bare "door" item is not present, supplement it
     if "door" not in seen:
         cleaned.append("door")
         seen.add("door")
 
-    # 最后检查 input_classes，把 normalize 后以 ' door' 结尾的类补进 cleaned
+    # Finally check input_classes, supplement normalized classes ending with ' door' to cleaned
     for cls in input_classes:
         cls_norm = normalize(cls)
         if cls_norm.endswith(" door") and cls_norm not in cleaned:

@@ -124,55 +124,55 @@ def rasterize_mesh(
     device
 ):
     """
-    对单帧相机 pose 在网格上做光栅化，返回 valid 掩码和 triangle_id。
+    Rasterize single frame camera pose onto the mesh, return valid mask and triangle_id.
 
     Args:
-        vertices:    (V, 3) 顶点坐标
-        faces:       (F, 3) 三角形顶点索引
-        c2w:         (4, 4) 相机到世界的变换矩阵
-        intrinsic:   (3, 3) 相机内参矩阵
-        image_size:  (H, W) 输出图像尺寸
-        device:      torch.device，若为 None，则根据可用性自动选择
+        vertices:    (V, 3) Vertex coordinates
+        faces:       (F, 3) Triangle vertex indices
+        c2w:         (4, 4) Camera to world transformation matrix
+        intrinsic:   (3, 3) Camera intrinsic matrix
+        image_size:  (H, W) Output image dimensions
+        device:      torch.device, automatically selected if None
 
     Returns:
-        valid:       (H, W) bool 张量，像素是否在网格上
-        triangle_id: (H, W) int 张量，像素对应三角形索引，-1 表示无效
+        valid:       (H, W) bool tensor, whether pixel is on the mesh
+        triangle_id: (H, W) int tensor, pixel's corresponding triangle index, -1 if invalid
     """
-    # 设备选取
+    # Device selection
     if device is None:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     flip_z = torch.tensor([
         [1, 0,  0, 0],
         [0, 1,  0, 0],
-        [0, 0, -1, 0],  # 反转Z轴
+        [0, 0, -1, 0],  # Invert Z axis
         [0, 0,  0, 1]
     ], device=device, dtype=torch.float32)
     
-    # 步骤2：计算世界->相机变换矩阵
+    # Step 2: Calculate world->camera transformation matrix
     w2c = torch.inverse(c2w.to(device))
     
-    # 步骤3：组合变换矩阵（先应用w2c，再反转Z轴）
+    # Step 3: Combine transformation matrices (apply w2c first, then invert Z axis)
     corrected_w2c = flip_z @ w2c
     
-    # 提取旋转和平移
+    # Extract rotation and translation
     R = corrected_w2c[:3, :3].unsqueeze(0)  # (1, 3, 3)
     T = corrected_w2c[:3, 3].unsqueeze(0)   # (1, 3)
 
-    # 构建 Meshes
+    # Build Meshes
     verts = vertices.to(device)
     faces_idx = faces.to(device)
     mesh = Meshes(verts=[verts], faces=[faces_idx])
 
     H, W = image_size
 
-    # 从 intrinsic 中提取焦距和主点
+    # Extract focal length and principal point from intrinsic
     fx = intrinsic[0, 0].item()
     fy = intrinsic[1, 1].item()
     cx = intrinsic[0, 2].item()
     cy = intrinsic[1, 2].item()
 
-    # 构建 PerspectiveCameras
+    # Build PerspectiveCameras
     cameras = PerspectiveCameras(
         focal_length=((fx, fy),),
         principal_point=((cx, cy),),
@@ -182,22 +182,22 @@ def rasterize_mesh(
         device=device
     )
 
-    # 光栅化配置：每像素只取一个最近面片
+    # Rasterization config: only take the nearest face per pixel
     raster_settings = RasterizationSettings(
         image_size=(H, W),
         blur_radius=0.0,
         faces_per_pixel=1,
-        perspective_correct=True,  # 透视校正
-        cull_backfaces=False,  # 禁用背面剔除
-        clip_barycentric_coords=False  # 不裁剪重心坐标
+        perspective_correct=True,  # Perspective correction
+        cull_backfaces=False,  # Disable backface culling
+        clip_barycentric_coords=False  # Do not clip barycentric coordinates
     )
     rasterizer = MeshRasterizer(cameras=cameras, raster_settings=raster_settings)
 
-    # 执行光栅化
+    # Execute rasterization
     fragments = rasterizer(mesh)
     pix_to_face = fragments.pix_to_face[0, ..., 0]  # (H, W)
 
-    # 构造输出
+    # Construct output
     valid = pix_to_face >= 0
     triangle_id = torch.where(valid, pix_to_face, -1)
 
@@ -286,37 +286,37 @@ def filter_mesh_from_vertices(keep, mesh_points, faces, tex_pos):
 
 def visualize_rasterization(valid, triangle_id):
     """
-    可视化光栅化结果
-    :param valid: 有效像素掩码 (H, W) bool数组
-    :param triangle_id: 三角形ID图 (H, W) int数组
+    Visualize rasterization results
+    :param valid: Valid pixel mask (H, W) boolean array
+    :param triangle_id: Triangle ID map (H, W) integer array
     """
-    # 转换为numpy数组（如果是torch.Tensor）
+    # Convert to numpy array (if torch.Tensor)
     if isinstance(valid, torch.Tensor):
         valid = valid.cpu().numpy()
     if isinstance(triangle_id, torch.Tensor):
         triangle_id = triangle_id.cpu().numpy()
     
     H, W = valid.shape
-    # 创建RGB图像 (H, W, 3)
+    # Create RGB image (H, W, 3)
     image = np.zeros((H, W, 3), dtype=np.float32)
     
     if np.any(valid):
-        # 获取有效区域的三角形ID
+        # Get triangle IDs of the valid region
         visible_ids = triangle_id[valid]
         
-        # 归一化ID到[0,1]范围
+        # Normalize IDs to [0,1] range
         min_id = np.min(visible_ids)
         max_id = np.max(visible_ids)
         if max_id > min_id:
             norm_ids = (visible_ids - min_id) / (max_id - min_id)
-        else:  # 避免除以0
+        else:  # Avoid division by 0
             norm_ids = np.zeros_like(visible_ids, dtype=np.float32)
         
-        # 使用viridis colormap映射颜色
-        colors = cm.viridis(norm_ids)[:, :3]  # 获取RGB，忽略alpha通道
+        # Map colors using viridis colormap
+        colors = cm.viridis(norm_ids)[:, :3]  # Get RGB, ignore alpha channel
         image[valid] = colors
     
-    # 可视化
+    # Visualize
     plt.figure(figsize=(10, 10))
     plt.imshow(image)
     plt.title('Rasterization Visualization')
@@ -332,17 +332,17 @@ def visualize_camera_o3d(c2w,
                          far: float = 1.0,
                          scale: float = 0.1):
     """
-    使用 Open3D 在 ply 场景中可视化相机视锥和坐标轴。
+    Use Open3D to visualize the camera frustum and coordinate axes in the PLY scene.
 
-    参数：
-      - c2w: (4,4) 相机到世界的变换矩阵，支持 numpy array 或 torch tensor
-      - intrinsic: (3,3) 相机内参矩阵，支持 numpy array 或 torch tensor
-      - ply_path: 场景的 PLY 文件路径
-      - image_size: (width, height) 图像平面大小
-      - near, far: 近平面和远平面距离
-      - scale: 坐标轴长度缩放
+    Arguments:
+      - c2w: (4,4) Camera-to-world transformation matrix, supports numpy array or torch tensor
+      - intrinsic: (3,3) Camera intrinsic matrix, supports numpy array or torch tensor
+      - ply_path: PLY file path of the scene
+      - image_size: (width, height) Image plane size
+      - near, far: Near and far plane distances
+      - scale: Coordinate axis length scale
     """
-    # 转为 numpy
+    # Convert to numpy
     if hasattr(c2w, 'cpu'):
         c2w_np = c2w.cpu().numpy()
     else:
@@ -352,47 +352,47 @@ def visualize_camera_o3d(c2w,
     else:
         K = np.array(intrinsic)
 
-    # 加载场景
+    # Load scene
     mesh = o3d.io.read_triangle_mesh(ply_path)
     mesh.compute_vertex_normals()
 
-    # 创建可视化窗口
+    # Create visualization window
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     vis.add_geometry(mesh)
 
     W, H = image_size
-    # 四角像素坐标
+    # Four-corner pixel coordinates
     pts_pix = np.array([[0, 0, 1], [W, 0, 1], [W, H, 1], [0, H, 1]])
     inv_K = np.linalg.inv(K)
 
-    # 近平面和远平面顶点
+    # Near and far plane vertices
     pts_cam_near = (inv_K @ pts_pix.T).T * near
     pts_cam_far  = (inv_K @ pts_pix.T).T * far
 
-    # 拼接并转换到世界
+    # Concatenate and transform to world
     verts_cam = np.vstack([pts_cam_near, pts_cam_far])    # (8,3)
     verts_h = np.hstack([verts_cam, np.ones((8,1))])     # (8,4)
     verts_world = (c2w_np @ verts_h.T).T[:, :3]          # (8,3)
 
-    # 定义视锥边连接
+    # Define frustum edge connections
     edges = [(0,1),(1,2),(2,3),(3,0),  # near
              (4,5),(5,6),(6,7),(7,4),  # far
              *[(i, i+4) for i in range(4)]
             ]
 
-    # 构建 LineSet
+    # Build LineSet
     frustum_ls = o3d.geometry.LineSet(
         points=o3d.utility.Vector3dVector(verts_world),
         lines=o3d.utility.Vector2iVector(edges)
     )
     frustum_ls.colors = o3d.utility.Vector3dVector([[1,0,0] for _ in edges])
 
-    # 相机坐标轴
+    # Camera coordinate axes
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale)
     axes.transform(c2w_np)
 
-    # 添加几何体并渲染
+    # Add geometry and render
     vis.add_geometry(frustum_ls)
     vis.add_geometry(axes)
     vis.run()
@@ -405,23 +405,23 @@ def compute_mvp(c2w: np.ndarray,
                 near: float,
                 far: float) -> np.ndarray:
     """
-    计算 OpenGL 风格的 MVP 矩阵。
+    Compute OpenGL style MVP matrix.
 
-    参数:
-        c2w   -- 4x4 相机在世界坐标系下的变换矩阵
-        K     -- 3x3 相机内参矩阵
-        width -- 视口宽度（像素）
-        height-- 视口高度（像素）
-        near  -- 裁剪近平面
-        far   -- 裁剪远平面
+    Arguments:
+        c2w   -- 4x4 camera to world coordinate transformation matrix
+        K     -- 3x3 camera intrinsic matrix
+        width -- viewport width (pixels)
+        height-- viewport height (pixels)
+        near  -- near clipping plane
+        far   -- far clipping plane
 
-    返回:
-        MVP   -- 4x4 MVP 矩阵
+    Returns:
+        MVP   -- 4x4 MVP matrix
     """
-    # 1. View 矩阵：世界到相机坐标
+    # 1. View Matrix: World to camera coordinates
     V = np.linalg.inv(c2w)
 
-    # 2. 扩展 K 到 4x4
+    # 2. Expand K to 4x4
     fx, fy = K[0, 0], K[1, 1]
     cx, cy = K[0, 2], K[1, 2]
     K4 = np.array([
@@ -431,7 +431,7 @@ def compute_mvp(c2w: np.ndarray,
         [ 0,  0,  0, 1]
     ], dtype=np.float32)
 
-    # 3. 构造像素到 NDC 及深度映射的视口变换
+    # 3. Construct viewport transformation from pixels to NDC and depth mapping
     #    x_ndc =  2*u/W - 1
     #    y_ndc =  1 - 2*v/H
     #    z_ndc = (f + n)/(n - f) + (2 f n)/(Z_c (n - f))
@@ -449,21 +449,21 @@ def compute_mvp(c2w: np.ndarray,
     P = D @ T @ K4
 
     # 4. MVP
-    MVP = P @ V  # 因为 Model = I
+    MVP = P @ V  # Because Model = I
     return MVP
 
 def build_opengl_proj_from_intrinsics(K, W, H, near=0.1, far=3.0):
     fx, fy = K[0,0], K[1,1]
     cx, cy = K[0,2], K[1,2]
 
-    # 把像素坐标系映射到 NDC (-1…+1)
-    # x_ndc = (u/cx - 1) 之类，推导后：
+    # Map pixel coordinate system to NDC (-1...+1)
+    # x_ndc = (u/cx - 1) etc, after derivation:
     A =  2.0 * fx / W
     B =  2.0 * fy / H
     C =  2.0 * (cx / W) - 1.0
     D = -2.0 * (cy / H) + 1.0
 
-    # 深度映射
+    # Depth mapping
     E = -(far + near) / (far - near)
     F = -2.0 * far * near / (far - near)
 
@@ -622,8 +622,8 @@ if __name__ == '__main__':
             # **VISUALIZATION** highlight faces in mesh
             # print("frame: ", stem, "mask_idx: ", mask_idx)
             # face_colors = np.zeros((mesh_simpl.faces.shape[0], 4), dtype=np.uint8)
-            # face_colors[:] = [200, 200, 200, 255]        # RGBA：默认浅灰
-            # face_colors[faces_idxs] = [255, 0, 0, 255]    # RGBA：高亮红
+            # face_colors[:] = [200, 200, 200, 255]        # RGBA: Default light gray
+            # face_colors[faces_idxs] = [255, 0, 0, 255]    # RGBA: Highlight red
 
             # mesh_simpl.visual.face_colors = face_colors
             # mesh_simpl.show()

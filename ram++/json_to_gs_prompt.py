@@ -15,6 +15,6 @@ args = parser.parse_args()
 with open(args.json_path, "r", encoding="utf-8") as f:
     tags = json.load(f)
 
-# 生成并打印提示
+# Generate and print prompt
 prompt = ". ".join(tags) + "."
 print(prompt)
