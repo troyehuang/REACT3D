@@ -1,0 +1,3 @@
+# ninja log v5
+3	11310	1756239487855662000	/cluster/project/cvg/students/zhahuang/DRAWER/grounded_sam/GroundingDINO/build/temp.linux-x86_64-cpython-38/cluster/project/cvg/students/zhahuang/DRAWER/grounded_sam/GroundingDINO/groundingdino/models/GroundingDINO/csrc/MsDeformAttn/ms_deform_attn_cpu.o	98e20ea9cf3644bf
+5	27890	1756239504421500000	/cluster/project/cvg/students/zhahuang/DRAWER/grounded_sam/GroundingDINO/build/temp.linux-x86_64-cpython-38/cluster/project/cvg/students/zhahuang/DRAWER/grounded_sam/GroundingDINO/groundingdino/models/GroundingDINO/csrc/vision.o	672e42129be49a70
