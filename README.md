@@ -33,7 +33,17 @@ git clone https://github.com/troyehuang/REACT3D.git --recursive
 conda create -n react3d python==3.10
 conda activate react3d
 
+pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 torchaudio==2.5.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install 'git+https://github.com/facebookresearch/detectron2.git' --no-build-isolation
+
 pip install -r requirements.txt
+
+cd opdformer/mask2former/modeling/pixel_decoder/ops
+python setup.py build install
+
+// opdm checkpoint
+wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-state-rgb-model/resolve/main/pytorch_model.pth -O {REACT3D_dir}/part2interactive/opdm_rgb.pth
+
 
 ```
 
@@ -55,6 +65,16 @@ xxx
 ## Quick Start
 
 To run the script on a specific scene, use:
+
+```bash
+cd REACT3D
+
+
+cd part2interactive
+python inference.py --scene-folder ${data_dir} --output ${data_dir}/scene_output --model opdm_rgb.pth
+python filter_duplicates.py --input_dir ${data_dir}/scene_output/ --output_dir ${data_dir}/final_output/ --iou_threshold 0.5
+python generate_remain_scene.py --scene ${data_dir}/mesh_aligned_0.05.ply --part_dir ${data_dir}/final_output/
+```
 
 
 
