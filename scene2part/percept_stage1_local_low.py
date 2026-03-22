@@ -615,7 +615,8 @@ if __name__ == '__main__':
 
             binary_mask = binary_erosion(binary_mask, iterations=4)
 
-            binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).cpu().numpy()
+            # binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).cpu().numpy()
+            binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).squeeze(0).cpu().numpy()
 
             faces_idxs = triangle_id[binary_mask][valid[binary_mask]].cpu().numpy().astype(np.int32)
 

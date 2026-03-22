@@ -266,7 +266,7 @@ if __name__ == "__main__":
         mvp = torch.from_numpy(mvp).cuda().float()
         valid, triangle_id = rasterize_texture(mesh_verts, mesh_faces, mvp, glctx, resolution)
 
-        binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).cpu().numpy()
+        binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).squeeze(0).cpu().numpy()
         faces_idxs = np.unique(triangle_id[binary_mask][valid[binary_mask]].cpu().numpy().astype(np.int32)).reshape(-1)
 
         mesh_mask_verts_np, mesh_mask_faces_np, face_map_0 = filter_mesh_from_faces(faces_idxs, mesh_verts_np, mesh_faces_np)
