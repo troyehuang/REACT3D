@@ -26,25 +26,73 @@ Interactive 3D scenes are increasingly vital for embodied intelligence, yet exis
 ## Setup
 
 ### Installation
+
 Clone the repository and install necessary dependencies：
 
 ```bash
 git clone https://github.com/troyehuang/REACT3D.git --recursive
+cd REACT3D
+
 conda create -n react3d python==3.10
 conda activate react3d
 
+export TORCH_CUDA_ARCH_LIST="7.5 8.0 8.6 8.9"
+
+pip install ninja
 pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 torchaudio==2.5.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-pip install 'git+https://github.com/facebookresearch/detectron2.git' --no-build-isolation
+#pip install torch==2.1.2+cu118 torchvision==0.16.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+
+# ram++
+pip install git+https://github.com/xinyu1205/recognize-anything.git
+
+# groundingDINO
+cd grounded_sam/GroundingDINO
+pip install -e .
+
+# scene2part
+cd ../..
+pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch --no-build-isolation
+pip install numpy==1.24 psutil trimesh open3d timm fairscale yapf transformers==4.37.2 opencv-python==4.6.0.66 pycocotools supervision pymeshlab==2022.2.post2
+pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
+pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html
+#pip install kaolin==0.15.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.1.1_cu118.html
+pip install git+https://github.com/NVlabs/nvdiffrast.git --no-build-isolation
 
 pip install -r requirements.txt
+
+# part2interactive
+pip install 'git+https://github.com/facebookresearch/detectron2.git' --no-build-isolation
 
 cd opdformer/mask2former/modeling/pixel_decoder/ops
 python setup.py build install
 
-// opdm checkpoint
+# opdm checkpoint
 wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-state-rgb-model/resolve/main/pytorch_model.pth -O {REACT3D_dir}/part2interactive/opdm_rgb.pth
 
+```
 
+Install LLaVA:
+```bash
+conda create -n llava python==3.10
+conda activate llava
+
+git clone https://github.com/xinyu1205/recognize-anything.git
+cd LLaVA
+pip install --upgrade pip
+pip install -e .
+```
+
+### Trouble Shooting
+If you encounter problem with GroundingDINO, please try this:
+```bash
+set BUILD_WITH_CUDA=True
+set CUDA_HOME=<your_path>
+set AM_I_DOCKER=False
+
+cd REACT3D/groundingdino/GroundingDINO
+
+python setup.py build
+python setup.py install
 ```
 
 ### Data Preparation
@@ -69,11 +117,11 @@ To run the script on a specific scene, use:
 ```bash
 cd REACT3D
 
+cd scene2part
+bash scene2part.sh # remember to change the paths
 
 cd part2interactive
-python inference.py --scene-folder ${data_dir} --output ${data_dir}/scene_output --model opdm_rgb.pth
-python filter_duplicates.py --input_dir ${data_dir}/scene_output/ --output_dir ${data_dir}/final_output/ --iou_threshold 0.5
-python generate_remain_scene.py --scene ${data_dir}/mesh_aligned_0.05.ply --part_dir ${data_dir}/final_output/
+bash part2interactive.sh # remember to change the paths
 ```
 
 
