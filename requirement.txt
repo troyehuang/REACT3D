@@ -1,0 +1,12 @@
+opencv-python
+setuptools==59.5.0
+git+https://github.com/cocodataset/panopticapi.git
+cython
+scipy
+shapely
+timm
+h5py
+submitit
+scikit-image
+open3d
+compas

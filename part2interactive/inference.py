@@ -122,54 +122,6 @@ TYPE_CLASSIFICATION = {
 ARROW_COLOR_ROTATION = [0, 1, 0]  # green
 ARROW_COLOR_TRANSLATION = [0, 0, 1]  # blue
 
-K_REALSENSE = [
-    923.08227539,
-    0.,
-    632.93695068,
-    0.,
-    922.37591553,
-    345.53430176,
-    0.,
-    0.,
-    1.,
-]
-
-K_EXAMPLE = [
-    214.85935872395834,
-    0.0,
-    0.0,
-    0.0,
-    214.85935872395834,
-    0.0,
-    125.90160319010417,
-    95.13726399739583,
-    1.0,
-],
-
-K_NOW = [
-    480.,
-    0.0,
-    0.0,
-    0.0,
-    480.,
-    0.0,
-    639.5,
-    359.5,
-    1.0,
-],
-
-K_256 = [
-    480.,
-    0.0,
-    0.0,
-    0.0,
-    480.,
-    0.0,
-    127.5,
-    95.5,
-    1.0,
-],
-
 K_SAME = [
     214.85935872395834,
     0.0,
@@ -236,15 +188,10 @@ def get_parser() -> argparse.ArgumentParser:
         help="path to extrinsics image file on which to run model",
     )
     parser.add_argument(
-        "--folder",
-        dest="folder",
-        metavar="INPUT FOLDER",
-        help="path to the folder containing RGB, depth and extrinsic files",
-    )
-    parser.add_argument(
-        "--scene-mesh",
-        dest="scene_mesh",
-        help="path to the scene mesh file (.ply)",
+        "--scene-folder",
+        dest="scene_folder",
+        metavar="SCENE FOLDER",
+        help="path to the scene folder",
     )
     parser.add_argument(  # FIXME: might make more sense to make this a path
         "-i",
@@ -649,193 +596,12 @@ def vis_2d_pred(img_path, origin, axis_vector, intrinsic_matrix, pred_type, is_r
     
     return vis.output
 
-
-# def main(
-#     cfg: CfgNode,
-#     rgb_image: str,
-#     intrinsics: list[float],
-#     num_samples: int,
-#     crop: bool,
-#     score_threshold: float,
-# ) -> None:
-#     """
-#     Main inference method.
-
-#     :param cfg: configuration object
-#     :param rgb_image: local path to RGB image
-#     :param depth_image: local path to depth image
-#     :param intrinsics: camera intrinsics matrix as a list of 9 values
-#     :param num_samples: number of sample visualization states to generate
-#     :param crop: if True, images will be cropped to remove whitespace before visualization
-#     :param score_threshold: float between 0 and 1 representing threshold at which to filter instances based on score
-#     """
-#     logger = logging.getLogger("detectron2")
-
-#     # setup data
-#     logger.info("Loading image.")
-#     inp = format_input(rgb_image)
-
-#     # setup model
-#     logger.info("Loading model.")
-#     model = build_model(cfg)
-#     weights = torch.load(cfg.MODEL.WEIGHTS, map_location=torch.device("cpu"))
-#     if "model" not in weights:
-#         weights = {"model": weights}
-#     load_model(model, weights)
-
-#     # run model on data
-#     logger.info("Running model.")
-#     prediction = predict(model, inp)[0]  # index 0 since there is only one image
-#     pred_instances = prediction["instances"]
-#     # print("+++++++++++++++++++++++++++++++++++++++")
-#     # print(prediction)
-
-#     # log results
-#     image_id = os.path.splitext(os.path.basename(rgb_image))[0]
-#     pred_dict = {"image_id": image_id}
-#     instances = pred_instances.to(torch.device("cpu"))
-#     pred_dict["instances"] = prediction_to_json(instances, image_id)
-#     torch.save(pred_dict, os.path.join(cfg.OUTPUT_DIR, f"{image_id}_prediction.pth"))
-#     print("+++++++++++++++++++++++++++++++++++++++")
-#     # print(pred_dict)
-    
-
-#     # select best prediction to visualize
-#     score_ranking = np.argsort([-1 * pred_instances[i].scores.item() for i in range(len(pred_instances))])
-#     score_ranking = [idx for idx in score_ranking if pred_instances[int(idx)].scores.item() > score_threshold]
-#     if len(score_ranking) == 0:
-#         logging.warning("The model did not predict any moving parts above the score threshold.")
-#         return
-
-#     for idx in score_ranking:  # iterate through all best predictions, by score threshold
-#         pred = pred_instances[int(idx)]  # take highest predicted one
-#         logger.info("Rendering prediction for instance %d", int(idx))
-#         output_dir = os.path.join(cfg.OUTPUT_DIR, str(idx))
-#         os.makedirs(output_dir, exist_ok=True)
-
-#         # extract predicted values for visualization
-#         mask = np.squeeze(pred.pred_masks.cpu().numpy())  # dim: [height, width]
-#         origin = pred.morigin.cpu().numpy().flatten()  # dim: [3, ]
-#         axis_vector = pred.maxis.cpu().numpy().flatten()  # dim: [3, ]
-#         # print("origin: ", origin)
-#         # print("axis_vector: ", axis_vector)
-
-#         pred_type = TYPE_CLASSIFICATION.get(pred.mtype.item())
-#         range_min = 0 - pred.mstate.cpu().numpy()
-#         range_max = pred.mstatemax.cpu().numpy() - pred.mstate.cpu().numpy()
-
-#         # process visualization
-#         color = o3d.io.read_image(rgb_image)
-#         # depth = o3d.io.read_image(depth_image)
-        
-#         # depth_np = np.load(depth_image)
-#         # depth = o3d.geometry.Image(depth_np)
-
-#         # depth_array = depth_np
-#         # print(f"Depth value range: {depth_array.min()} - {depth_array.max()}")
-
-#         # depth_scale = 1.
-#         # rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth, depth_scale=depth_scale, convert_rgb_to_intensity=False)
-#         color_np = np.asarray(color)
-#         height, width = color_np.shape[:2]
-
-#         # generate intrinsics
-#         intrinsic_matrix = np.reshape(intrinsics, (3, 3), order="F")
-#         intrinsic_obj = o3d.camera.PinholeCameraIntrinsic(
-#             width,
-#             height,
-#             intrinsic_matrix[0, 0],
-#             intrinsic_matrix[1, 1],
-#             intrinsic_matrix[0, 2],
-#             intrinsic_matrix[1, 2],
-#         )
-
-#         # Convert the RGBD image to a point cloud
-#         # pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic_obj)
-
-#         arrow_back_project(rgb_image, origin, axis_vector, intrinsic_matrix, mask)
-
-#         # vis = o3d.visualization.Visualizer()
-#         # vis.create_window(visible=True)
-
-#         # Add the translated geometries
-#         # vis.add_geometry(pcd)
-#         # vis.run()
-#         # vis.destroy_window()
-
-#         # Create a LineSet to visualize the direction vector
-#         # axis_arrow = draw_line(origin, axis_vector + origin, depth_scale, depth_array, K_EXAMPLE, K_NOW)
-#         # axis_arrow.paint_uniform_color(ARROW_COLOR_ROTATION)
-
-
-#         # if USE_GT:
-#         #     anno_path = f"/localhome/atw7/projects/opdmulti/data/data_demo_dev/59-4860.json"
-#         #     part_id = 32
-
-#         #     # get annotation for the frame
-#         #     import json
-
-#         #     with open(anno_path, "r") as f:
-#         #         anno = json.load(f)
-
-#         #     articulations = anno["articulation"]
-#         #     for articulation in articulations:
-#         #         if articulation["partId"] == part_id:
-#         #             range_min = articulation["rangeMin"] - articulation["state"]
-#         #             range_max = articulation["rangeMax"] - articulation["state"]
-#         #             break
-
-#         # if pred_type == "rotation":
-#         #     generate_rotation_visualization(
-#         #         pcd,
-#         #         axis_arrow,
-#         #         mask,
-#         #         axis_vector,
-#         #         origin,
-#         #         range_min,
-#         #         range_max,
-#         #         num_samples,
-#         #         output_dir,
-#         #     )
-#         # elif pred_type == "translation":
-#         #     generate_translation_visualization(
-#         #         pcd,
-#         #         axis_arrow,
-#         #         mask,
-#         #         axis_vector,
-#         #         range_min,
-#         #         range_max,
-#         #         num_samples,
-#         #         output_dir,
-#         #     )
-#         # else:
-#         #     raise ValueError(f"Invalid motion prediction type: {pred_type}")
-        
-#         # generate_articulation_visualization(
-#         #     pcd,
-#         #     axis_arrow,
-#         #     mask,
-#         #     axis_vector,
-#         #     origin,
-#         #     output_dir,
-#         # )
-
-#         if pred_type:
-#             if crop:  # crop images to remove shared extraneous whitespace
-#                 output_dir_cropped = f"{output_dir}_cropped"
-#                 if not os.path.isdir(output_dir_cropped):
-#                     os.makedirs(output_dir_cropped)
-#                 batch_trim(output_dir, output_dir_cropped, identical=True)
-#                 # create_gif(output_dir_cropped, num_samples)
-#             else:  # leave original dimensions of image as-is
-#                 # create_gif(output_dir, num_samples)
-#                 pass
-
 def main(
     cfg: CfgNode,
     folder: str,
     scene_mesh: str,
     intrinsics: list[float],
+    scene_output_dir: str,
     num_samples: int,
     crop: bool,
     score_threshold: float,
@@ -860,10 +626,7 @@ def main(
     file_groups = group_pickle_and_mesh_by_id(folder + "/real")
     # print(file_groups)
 
-    scene_output_dir = os.path.join(cfg.OUTPUT_DIR, folder.split("/")[-3])
     print(scene_output_dir)
-    if os.path.exists(scene_output_dir):
-        shutil.rmtree(scene_output_dir)
     os.makedirs(scene_output_dir, exist_ok=True)
 
     # copy_all(folder + "/unopenable", scene_output_dir + "/unopenable")
@@ -1205,61 +968,52 @@ def main(
 if __name__ == "__main__":
     # parse arguments
     args = get_parser().parse_args()
+    
+    # if os.path.exists(args.output):
+    #     shutil.rmtree(args.output)
+        
     cfg = setup_cfg(args)
 
-    scene_ids = ["realscan_landscape_format"]
+    folder = f"{args.scene_folder}/perception/vis_groups_final_mesh"
+    scene_mesh = f"{args.scene_folder}/mesh_aligned_0.05.ply"
+    intrinsic_json_path = f"{args.scene_folder}/pose_intrinsic_imu_mvp.json"
 
-    # scene_ids = [ 
-    #     "scene_00093_00", "scene_00096_00"
-    # ]
+    current_intrinsics = load_scaled_intrinsics(intrinsic_json_path, scale=3.75)
+    if current_intrinsics is None:
+        current_intrinsics = K_SAME
 
-    # scene_ids = ["scene_00006_00","scene_00022_00", "scene_00030_01", "scene_00065_00", "scene_00086_00", "scene_00089_00", 
-    # ]
+    # scene_output_dir = os.path.join(cfg.OUTPUT_DIR, folder.split("/")[-3])
+    scene_output_dir = args.output
+    start_time = time.time()
+    # run main code
+    engine.launch(
+        main,
+        args.num_processes,
+        args=(
+            cfg,
+            # args.rgb_image,
+            # args.depth_image,
+            # args.extrinsics_npy,
+            folder,
+            scene_mesh,
+            current_intrinsics,
+            scene_output_dir,
+            args.num_samples,
+            args.crop,
+            args.score_threshold,
+            args.vis,
+        ),
+    )
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Module 4: Articulated Objects Generation -- {duration:.2f} seconds")
 
-    # scene_ids = ["c0f5742640",
-    # ]
-
-    for sid in scene_ids:
-        print("Processing scene: ", sid)
-        # args.scene_mesh = f"/home/troye/ssd/datasets/scannet++/data/{sid}/scans/mesh_aligned_0.05.ply"
-        args.scene_mesh = f"/home/troye/ssd/Zhao_SP/scene2obj/segmentation_data/{sid}/mesh_aligned_0.05.ply"
-        args.folder = f"/home/troye/ssd/Zhao_SP/scene2obj/segmentation_data/{sid}/perception/vis_groups_final_mesh"
-        intrinsic_json_path = f"/home/troye/ssd/Zhao_SP/scene2obj/segmentation_data/{sid}/pose_intrinsic_imu_mvp.json"
-
-        current_intrinsics = load_scaled_intrinsics(intrinsic_json_path, scale=3.75)
-        if current_intrinsics is None:
-            current_intrinsics = K_SAME
-
-        scene_output_dir = os.path.join(cfg.OUTPUT_DIR, args.folder.split("/")[-3])
-        start_time = time.time()
-        # run main code
-        engine.launch(
-            main,
-            args.num_processes,
-            args=(
-                cfg,
-                # args.rgb_image,
-                # args.depth_image,
-                # args.extrinsics_npy,
-                args.folder,
-                args.scene_mesh,
-                current_intrinsics,
-                args.num_samples,
-                args.crop,
-                args.score_threshold,
-                args.vis,
-            ),
-        )
-        end_time = time.time()
-        duration = end_time - start_time
-        print(f"Module 4: Articulated Objects Generation -- {duration:.2f} seconds")
-
-        # --- TIME BREAKDOWN LOGGING ---
-        save_time_breakdown(
-            input_dir=scene_output_dir,
-            output_dir=scene_output_dir,
-            module_name="Module 4: Articulated Objects Generation",
-            start_time=start_time,
-            end_time=end_time,
-            duration=duration
-        )
+    # --- TIME BREAKDOWN LOGGING ---
+    # save_time_breakdown(
+    #     input_dir=scene_output_dir,
+    #     output_dir=scene_output_dir,
+    #     module_name="Module 4: Articulated Objects Generation",
+    #     start_time=start_time,
+    #     end_time=end_time,
+    #     duration=duration
+    # )
