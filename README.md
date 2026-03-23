@@ -121,8 +121,15 @@ cd REACT3D
 cd scene2part
 bash scene2part.sh # remember to change the paths
 
-cd part2interactive
+cd ../part2interactive
 bash part2interactive.sh # remember to change the paths
+
+cd ../texture
+bash generate_texture.sh
+
+cd ../simulation_ready
+bash simulation_ready.sh
+
 ```
 
 

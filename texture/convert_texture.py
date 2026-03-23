@@ -1,6 +1,6 @@
 import cv2
-from pathlib import Path
 import numpy as np
+from pathlib import Path
 import trimesh
 import xatlas
 from PIL import Image, ImageFilter
@@ -9,6 +9,36 @@ import argparse
 import os
 import sys
 from tqdm import tqdm
+import time, csv
+
+def save_time_breakdown(input_dir, output_dir, module_name, start_time, end_time, duration):
+    input_csv_path = os.path.join(input_dir, "time_breakdown.csv")
+    output_csv_path = os.path.join(output_dir, "time_breakdown.csv")
+    
+    all_rows = []
+
+    # try to read existing CSV
+    if os.path.exists(input_csv_path):
+        with open(input_csv_path, mode='r', newline='', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            all_rows = list(reader)
+    else:
+        all_rows.append(['Module', 'Start_Time', 'End_Time', 'Duration_Seconds'])
+
+    # append new row
+    all_rows.append([
+        module_name,
+        time.strftime("%H:%M:%S", time.localtime(start_time)),
+        time.strftime("%H:%M:%S", time.localtime(end_time)),
+        f"{duration:.2f}"
+    ])
+
+    # write back to output CSV
+    with open(output_csv_path, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerows(all_rows)
+
+    print(f"[{module_name}] complete. Time breakdown saved to {output_csv_path}")
 
 # Barycentric interpolation
 def barycentric_interpolate(v0, v1, v2, c0, c1, c2, p):
@@ -66,12 +96,60 @@ def convert_glb_to_obj(glb_path: Path, out_dir: Path) -> Path:
 
     return obj_path
 
+def scene_to_single_mesh(scene_or_mesh: trimesh.Scene) -> trimesh.Trimesh:
+    """
+    Whether GLB is loaded as Scene or Trimesh, unify it into a Trimesh.
+    Merge multiple geometries; preserve original topology and UVs.
+    """
+    if isinstance(scene_or_mesh, trimesh.Trimesh):
+        return scene_or_mesh
+
+    # Scene -> Merge all geometries
+    if not isinstance(scene_or_mesh, trimesh.Scene):
+        raise TypeError(f"Unsupported type: {type(scene_or_mesh)}")
+
+    if not scene_or_mesh.geometry:
+        raise ValueError("Scene has no geometry.")
+
+    geoms = list(scene_or_mesh.geometry.values())
+    if len(geoms) == 1:
+        return geoms[0]
+
+    # Merge multiple geometries (handles index offsets; preserves per-vertex UV/color etc.)
+    merged = trimesh.util.concatenate(geoms)
+    return merged
+
+def convert_glb_to_obj_with_normals(glb_path: Path, out_obj_path: Path) -> None:
+
+    glb_path = Path(glb_path).expanduser().resolve()
+    out_obj_path = Path(out_obj_path).expanduser().resolve()
+    out_obj_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load GLB; try to load as mesh, merge if multiple geometries
+    # Do not add process=True here to avoid side effects like recalculating normals on read
+    scene_or_mesh = trimesh.load(str(glb_path), force='scene', process=False)
+    mesh = scene_to_single_mesh(scene_or_mesh)
+
+    # Note: mesh.fix_normals() is not called here to **preserve the original normals in the file**
+    # If you want to compute and export when there are "no normals", you can call mesh.fix_normals() in the outer condition
+
+    # Force export with normals and textures
+    mesh.export(
+        str(out_obj_path),
+        file_type='obj',
+        include_normals=True,
+        include_texture=True
+    )
+
+
 def process_obj_file(input_mesh_path, texture_size=256):
 
     # input_mesh_path = "/home/troye/ssd/Zhao_SP/opdm_code/scene_output/40aec5fffa/microwave_0/0/part.obj"
     # output_file_name = input_mesh_path.split("/")[-1].split(".")[0]
     # output_texture_path = f"./texture/{output_file_name}.png"
-    output_mesh_path = input_mesh_path.replace(".obj", ".glb")
+    base, _ = os.path.splitext(input_mesh_path)
+    # output_mesh_path = input_mesh_path.replace(".obj", ".glb")
+    output_mesh_path = base + ".glb"
     output_obj_dir = input_mesh_path.replace(".obj", "_obj_textured")
     print(f"output_mesh_path: {output_mesh_path}")
 
@@ -155,12 +233,13 @@ def process_obj_file(input_mesh_path, texture_size=256):
     visuals = trimesh.visual.TextureVisuals(uv=uvs, material=material)
     mesh.visual = visuals
     # mesh.show()
-    
-    mesh.fix_normals()
+
     # export glb file
+    mesh.fix_normals()
     mesh.export(output_mesh_path)
 
-    convert_glb_to_obj(output_mesh_path, output_obj_dir)
+    # convert_glb_to_obj(output_mesh_path, output_obj_dir)
+    # convert_glb_to_obj_with_normals(output_mesh_path, output_obj_dir)
 
 def main(root_dir, texture_size=256):
     for subfolder in tqdm(os.listdir(root_dir)):
@@ -168,9 +247,9 @@ def main(root_dir, texture_size=256):
         # if not os.path.isdir(subfolder_path):
         #     continue
         # unopenable mesh
-        if subfolder == "mesh_aligned_0.05.obj" or subfolder == "remain_scene.ply":
+        if subfolder == "remain_scene.ply":
             # continue
-            process_obj_file(subfolder_path, 2048)
+            process_obj_file(subfolder_path, 512)
 
         # openable mesh
         # for inner in os.listdir(subfolder_path):
@@ -181,12 +260,12 @@ def main(root_dir, texture_size=256):
         #     # if inner.endswith("not_valid"):
         #     #     continue
 
-        #obj_path = os.path.join(subfolder_path, "part.obj")
-        #if os.path.exists(obj_path):
-        #    try:
-        #        process_obj_file(obj_path, texture_size)
-        #    except Exception as e:
-        #        print(f"Error when processing {obj_path}: {e}")
+        obj_path = os.path.join(subfolder_path, "part.obj")
+        if os.path.exists(obj_path):
+            try:
+                process_obj_file(obj_path, texture_size)
+            except Exception as e:
+                print(f"Error when processing {obj_path}: {e}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -201,5 +280,22 @@ if __name__ == '__main__':
     if not os.path.exists(root_folder):
         print(f"{root_folder} doesn't exist")
         exit(1)
-        
+    
+    # start timer
+    start_time = time.time()
+
     main(root_folder, args.texture_size)
+
+    # end timer
+    end_time = time.time()
+    duration = end_time - start_time
+
+    # --- TIME BREAKDOWN LOGGING ---
+    save_time_breakdown(
+        input_dir=root_folder,
+        output_dir=root_folder,
+        module_name="Module 6: Texture Generation",
+        start_time=start_time,
+        end_time=end_time,
+        duration=duration
+    )
