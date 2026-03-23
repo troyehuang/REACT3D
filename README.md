@@ -46,7 +46,7 @@ set BUILD_WITH_CUDA=True
 set CUDA_HOME=<your_path>
 set AM_I_DOCKER=False
 
-cd groundingdino/GroundingDINO
+cd grounded_sam/GroundingDINO
 python setup.py build
 python setup.py install
 
