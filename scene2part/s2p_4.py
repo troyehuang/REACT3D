@@ -55,8 +55,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     back_match_dir = os.path.join(args.data_dir, 'perception', "vis_groups_back_match")
-    save_dir = os.path.join(args.data_dir, 'perception', "vis_groups_handle_note")
-    save_mask_dir = os.path.join(args.data_dir, 'perception', "vis_groups_handle_note_masks")
+    save_dir = os.path.join(args.data_dir, 'perception', "vis_groups_cleaned")
+    save_mask_dir = os.path.join(args.data_dir, 'perception', "vis_groups_cleaned_masks")
 
     existing_stem_masks = []
 

@@ -214,8 +214,8 @@ if __name__ == "__main__":
     depth_dir = args.depth_dir
 
     back_match_vis_dir = os.path.join(args.data_dir, 'perception', "vis_groups_back_match")
-    binary_mask_dir = os.path.join(args.data_dir, 'perception', "vis_groups_handle_note_masks")
-    gpt_filtered_dir = os.path.join(args.data_dir, 'perception', "vis_groups_gpt4_api")
+    binary_mask_dir = os.path.join(args.data_dir, 'perception', "vis_groups_cleaned_masks")
+    cleaned_vis_dir = os.path.join(args.data_dir, 'perception', "vis_groups_cleaned")
     save_dir = os.path.join(args.data_dir, 'perception', "vis_groups_final_mesh")
     pose_path = os.path.join(args.data_dir, "pose_intrinsic_imu_mvp.json")
     top_k_pkl = os.path.join(args.data_dir, 'perception', "top_k_matches.pkl")
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     mesh_verts = torch.from_numpy(mesh_verts_np).float().cuda().contiguous()
     mesh_faces = torch.from_numpy(mesh_faces_np).int().cuda().contiguous()
 
-    filtered_fnames = sorted(os.listdir(gpt_filtered_dir))
+    filtered_fnames = sorted(os.listdir(cleaned_vis_dir))
     filtered_fnames = [name for name in filtered_fnames if name.endswith('.png')]
     faces_idxs_list = []
     glctx = dr.RasterizeGLContext(output_db=False)
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     mask_dict = {}
     i = 0
     for fname in tqdm(filtered_fnames):
-        Image.open(os.path.join(gpt_filtered_dir, fname)).save(os.path.join(save_dir, fname))
+        Image.open(os.path.join(cleaned_vis_dir, fname)).save(os.path.join(save_dir, fname))
 
         mesh_id = fname[len("back_match_mesh_"):-len("_frame_000000_01.png")]
         frame_name = fname[len("back_match_mesh_001_"):-len("_01.png")]

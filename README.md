@@ -65,9 +65,6 @@ pip install 'git+https://github.com/facebookresearch/detectron2.git' --no-build-
 cd opdformer/mask2former/modeling/pixel_decoder/ops
 python setup.py build install
 
-# opdm checkpoint
-wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-state-rgb-model/resolve/main/pytorch_model.pth -O {REACT3D_dir}/part2interactive/opdm_rgb.pth
-
 ```
 
 Install LLaVA:
@@ -81,20 +78,37 @@ pip install --upgrade pip
 pip install -e .
 ```
 
+Install checkpoints:
+```bash
+cd REACT3D
+
+# ram++ checkpoint
+cd ram++
+wget --no-check-certificate https://huggingface.co/xinyu1205/recognize-anything-plus-model/resolve/main/ram_plus_swin_large_14m.pth
+
+# grounded sam checkpoint
+cd ../grounded_sam
+wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
+wget https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth
+
+# opdm checkpoint
+cd ../part2interactive
+wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-state-rgb-model/resolve/main/pytorch_model.pth -O {REACT3D_dir}/part2interactive/opdm_rgb.pth
+```
 
 ### Data Preparation
 We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, a small subset of generated interactive scenes and correspoonding static input scenes is provided [here]().
 
-To use custom data, please follow the instructions in xxx to process your own scenes.
+To use custom data, please follow the format in "data" folder to process your own scenes. Make sure the your data format is the same as the example data.
 
-The `xxx` folder is organized as follows:
+The `data` folder is organized as follows:
 ```bash
-xxx
-|---xxx
-|   |---xxx
-|   |---xxx
-|   |---...
-|---xxx
+data
+|---scene_name
+|   |---images_2
+|   |---mesh_aligned_0.05.ply
+|   |---pose_intrinsic_imu.json
+|   |---depth
 ```
 
 ## Quick Start
