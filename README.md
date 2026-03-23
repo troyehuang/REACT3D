@@ -18,7 +18,7 @@
     <a href="https://people.inf.ethz.ch/pomarc/">Marc Pollefeys</a>
 </p>
 
-<img src="./assets/teaser.jpg" alt="[Teaser Figure]" style="zoom:80%;" />
+<img src="./assets/teaser.png" alt="[Teaser Figure]" style="zoom:80%;" />
 </div>
 
 Interactive 3D scenes are increasingly vital for embodied intelligence, yet existing datasets remain limited due to the labor-intensive process of annotating part segmentation, kinematic types, and motion trajectories. We present REACT3D, a scalable zero-shot framework that converts static 3D scenes into simulation-ready interactive replicas with consistent geometry, enabling direct use in diverse downstream tasks.
