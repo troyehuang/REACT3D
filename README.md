@@ -40,22 +40,21 @@ export TORCH_CUDA_ARCH_LIST="7.5 8.0 8.6 8.9"
 
 pip install ninja
 pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 torchaudio==2.5.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-#pip install torch==2.1.2+cu118 torchvision==0.16.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
-
-# ram++
-pip install git+https://github.com/xinyu1205/recognize-anything.git
 
 # groundingDINO
+set BUILD_WITH_CUDA=True
+set CUDA_HOME=<your_path>
+set AM_I_DOCKER=False
+
 cd grounded_sam/GroundingDINO
-pip install -e .
+python setup.py build
+python setup.py install
 
 # scene2part
 cd ../..
 pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch --no-build-isolation
-pip install numpy==1.24 psutil trimesh open3d timm fairscale yapf transformers==4.37.2 opencv-python==4.6.0.66 pycocotools supervision pymeshlab==2022.2.post2
 pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
 pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html
-#pip install kaolin==0.15.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.1.1_cu118.html
 pip install git+https://github.com/NVlabs/nvdiffrast.git --no-build-isolation
 
 pip install -r requirements.txt
@@ -82,18 +81,6 @@ pip install --upgrade pip
 pip install -e .
 ```
 
-### Trouble Shooting
-If you encounter problem with GroundingDINO, please try this:
-```bash
-set BUILD_WITH_CUDA=True
-set CUDA_HOME=<your_path>
-set AM_I_DOCKER=False
-
-cd REACT3D/groundingdino/GroundingDINO
-
-python setup.py build
-python setup.py install
-```
 
 ### Data Preparation
 We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, a small subset of generated interactive scenes and correspoonding static input scenes is provided [here]().
