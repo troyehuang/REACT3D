@@ -1,14 +1,12 @@
 #!/bin/bash
 
-CONDA_DIR="/cluster/home/zhahuang/miniconda3"
 CODE_DIR="/cluster/project/cvg/students/zhahuang/REACT3D"
 
-source "${CONDA_DIR}/etc/profile.d/conda.sh"
+conda activate react3d
 
 data_dir=/cluster/project/cvg/students/zhahuang/DRAWER/data_revision/realscan_test
 
 # ----------------------ram------------------------
-conda activate ram
 cd ${CODE_DIR}/ram++
 
 python inference_ram_plus.py --image_dir ${data_dir}/images_2 --pretrained ram_plus_swin_large_14m.pth
@@ -28,7 +26,7 @@ fi
 TEXT_PROMPT="$(cat "${PROMPT_FILE}")"
 
 #-----------------------perception---------------------
-conda activate drawer_sdf
+conda activate react3d
 
 python generate_intrinsic_mvp.py ${data_dir}/pose_intrinsic_imu.json
 
