@@ -1754,7 +1754,8 @@ def refine_origin_and_vector(origin, vector, obb_corners, pred_type=None):
         else:
             result_vector = dir_vec
 
-        return origin, result_vector
+        result_origin = np.mean(obb_corners, axis=0)
+        return result_origin, result_vector
     
     if vector_norm < 1e-8:  # Process zero vector
         edge_selected = v1
