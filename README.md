@@ -97,18 +97,20 @@ wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-sta
 ```
 
 ### Data Preparation
-We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, a small subset of generated interactive scenes and correspoonding static input scenes is provided [here]().
+We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, we provide an example input scene [here](https://drive.google.com/file/d/1i7BwzsvcVXlbCpmStOlC_dPT-CUMZo2u/view?usp=sharing).
 
-To use custom data, please follow the format in "data" folder to process your own scenes. Make sure the your data format is the same as the example data.
+*Note: For computational efficiency, the provided example scene has been downsampled: the image resolution is reduced by half, and the frame sequence is sub-sampled by extracting every 5th frame. Please be aware that these factors may impact the final quality of the reconstructed results.*
 
-The `data` folder is organized as follows:
+
+To use custom data, please follow the structure of the `example_input_scene` to process your own scenes. Make sure the your input data format is the same as the example data.
+
+The `example_input_scene` folder is organized as follows:
 ```bash
-data
-|---scene_name
-|   |---images_2
-|   |---mesh_aligned_0.05.ply
-|   |---pose_intrinsic_imu.json
-|   |---depth
+example_input_scene
+|---images_2
+|---mesh_aligned_0.05.ply
+|---pose_intrinsic_imu.json
+|---depth
 ```
 
 ## Quick Start
