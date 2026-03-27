@@ -71,8 +71,11 @@ if __name__ == "__main__":
     # Save the unique tags to a json file
     output_dir = os.path.dirname(os.path.normpath(dir_path))
     output_file = os.path.join(output_dir, 'scene_tags.json')
+    
+    sorted_tags = sorted(list(tags))
     with open(output_file, 'w') as f:
-        json.dump(list(tags), f, indent=4)
+        json.dump(sorted_tags, f, indent=4)
     print(f"Unique tags saved to {output_file}")
 
     
+
