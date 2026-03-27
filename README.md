@@ -141,6 +141,7 @@ bash simulation_ready.sh
 - [x] Performance optimization for Scene2Part module
 - [x] Upgrade from LLaVA to Qwen3.5
 - [x] Viser interface
+- [ ] Visualization guide
 - [ ] Texture
 
 ## Acknowledgements
