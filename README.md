@@ -2,8 +2,8 @@
 
 
 <div align="center">
-<a href="https://react3d.github.io/"><img src="https://img.shields.io/badge/Project_Page-green" alt="Project Page"></a>
-<a href="https://arxiv.org/abs/2510.11340" target="_blank" rel="noopener noreferrer"> <img src="https://img.shields.io/badge/Paper-VGGT" alt="Paper PDF"></a>
+<a href="https://react3d.github.io/"><img src="https://img.shields.io/badge/Project_Page-green" alt="Project Page" height="24"></a>
+<a href="https://arxiv.org/abs/2510.11340" target="_blank" rel="noopener noreferrer"> <img src="https://img.shields.io/badge/Paper-VGGT" alt="Paper PDF" height="24"></a>
 <!-- <a href="https://drive.google.com/file/d/1PuDanf0JnpyCRtiurPIESG80pU_nEBIj/view"> <img src="https://img.shields.io/badge/Demo-blue" alt="Demo"></a> -->
 
 <p>
@@ -36,10 +36,11 @@ cd REACT3D
 conda create -n react3d python==3.10
 conda activate react3d
 
+# change for your machine
 export TORCH_CUDA_ARCH_LIST="7.5 8.0 8.6 8.9"
 
 pip install ninja
-pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 torchaudio==2.5.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch==2.1.2+cu121 torchvision==0.16.2+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 
 # groundingDINO
 set BUILD_WITH_CUDA=True
@@ -54,7 +55,7 @@ python setup.py install
 cd ../..
 pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch --no-build-isolation
 pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
-pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html
+pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.1.2_cu121.html
 pip install git+https://github.com/NVlabs/nvdiffrast.git --no-build-isolation
 
 pip install -r requirements.txt
@@ -67,15 +68,13 @@ python setup.py build install
 
 ```
 
-Install LLaVA:
+We updated the code to use Qwen3.5 instead of LLaVA.
+Install the environment for Qwen3.5:
 ```bash
-conda create -n llava python==3.10
-conda activate llava
+conda create -n react3d_qwen python==3.10
+conda activate react3d_qwen
 
-git clone https://github.com/xinyu1205/recognize-anything.git
-cd LLaVA
-pip install --upgrade pip
-pip install -e .
+pip install transformers
 ```
 
 Install checkpoints:
@@ -97,7 +96,7 @@ wget --no-check-certificate https://huggingface.co/3dlg-hcvc/opdmulti-motion-sta
 ```
 
 ### Data Preparation
-We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, we provide an example input scene [here](https://drive.google.com/file/d/1i7BwzsvcVXlbCpmStOlC_dPT-CUMZo2u/view?usp=sharing).
+We evaluate our work on [ScanNet++](https://github.com/scannetpp/scannetpp) augmented by [Articulated3D](https://github.com/insait-institute/USDNet) and [MultiScan](https://github.com/smartscenes/multiscan) datasets. For convenience, we provide an [example input scene](https://drive.google.com/file/d/1i7BwzsvcVXlbCpmStOlC_dPT-CUMZo2u/view?usp=sharing) and the corresponding [output](https://drive.google.com/file/d/1TKSeXdMsBuKDKMxbx2dYizlcQqRoyFJD/view?usp=sharing). The interactive 3D demo for this output is shown in our [project page](https://react3d.github.io/#interactive-demo).
 
 *Note: For computational efficiency, the provided example scene has been downsampled: the image resolution is reduced by half, and the frame sequence is sub-sampled by extracting every 5th frame. Please be aware that these factors may impact the final quality of the reconstructed results.*
 
@@ -120,11 +119,12 @@ To run the script on a specific scene, use:
 ```bash
 cd REACT3D
 
+# remember to change the paths in each script
 cd scene2part
-bash scene2part.sh # remember to change the paths
+bash scene2part.sh
 
 cd ../part2interactive
-bash part2interactive.sh # remember to change the paths
+bash part2interactive.sh
 
 cd ../texture
 bash generate_texture.sh
@@ -134,12 +134,20 @@ bash simulation_ready.sh
 
 ```
 
-
+## Progress
+- [x] Project Page online
+- [x] Initial code released
+- [x] Example input scene and output data
+- [x] Performance optimization for Scene2Part module
+- [x] Upgrade from LLaVA to Qwen3.5
+- [x] Viser interface
+- [ ] Texture
 
 ## Acknowledgements
 Our work is based on [OPDMulti](https://github.com/3dlg-hcvc/OPDMulti) and [DRAWER](https://github.com/xiahongchi/DRAWER). We thank the authors for their great work and open-sourcing the code.
 
 ## Citation
+If you find our work useful, please consider citing:
 ```
 @ARTICLE{11434845,
   author={Huang, Zhao and Sun, Boyang and Delitzas, Alexandros and Chen, Jiaqi and Pollefeys, Marc},

@@ -1,7 +1,7 @@
 #!/bin/bash
 
+# edit here
 source /home/troye/miniconda3/etc/profile.d/conda.sh
-
 CODE_DIR="/home/troye/ssd/REACT3D"
 data_dir=/home/troye/ssd/REACT3D/data/realscan_test
 
@@ -15,9 +15,9 @@ python inference_ram_plus.py --image_dir ${data_dir}/images_2 --pretrained ${COD
 cd ${CODE_DIR}/scene2part
 
 #------------------------openable tags filter--------------------
-conda activate llava
+conda activate react3d_qwen
 
-python filter_ram_llava.py --data_dir ${data_dir}
+python filter_ram_qwen.py --data_dir ${data_dir}
 
 PROMPT_FILE=${data_dir}/sam_prompt.txt
 if [[ ! -f ${PROMPT_FILE} ]]; then
@@ -37,11 +37,11 @@ python grounded_sam_detect_doors.py   --config GroundingDINO/groundingdino/confi
 
 cd ${CODE_DIR}/scene2part
 
-python s2p_1_low.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --mesh_path ${data_dir}/mesh_aligned_0.05.ply --num_max_frames 2000 --num_faces_simplified 80000
+python s2p_1_low_fast.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --mesh_path ${data_dir}/mesh_aligned_0.05.ply --num_max_frames 2000 --num_faces_simplified 80000
 
 python s2p_2.py  --data_dir ${data_dir}
 
-python s2p_3.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --top_k 5
+python s2p_3_fast.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --top_k 5
 
 python s2p_4.py --data_dir ${data_dir}
 

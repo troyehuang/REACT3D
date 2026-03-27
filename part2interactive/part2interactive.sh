@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# edit here
 CODE_DIR="/cluster/project/cvg/students/zhahuang/REACT3D"
 data_dir=/cluster/project/cvg/students/zhahuang/DRAWER/data_revision/40aec5fffa_new_1
 
