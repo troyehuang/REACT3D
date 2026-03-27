@@ -681,8 +681,20 @@ def corners_to_mesh(cuboid, pred_type, thickness_ratio=0.03):
         inner_box_triangles = []
         vertex_offset_inner = 0
 
+        # Identify which faces to remove:
+        # 1. The face that corresponds to the part mesh (consistently the 'left' / pjmin face)
+        # 2. The physical 'top' face (highest in world space)
+        
+        # Calculate world-space centers for all faces
+        face_centers = {k: np.mean(corners[idxs], axis=0) for k, idxs in faces_def.items()}
+        
+        # Top face is the one with highest Z in world space (ScanNet++ standard)
+        # If your 'Top' is usually Y, change the index from [2] to [1]
+        top_face_key = max(face_centers, key=lambda k: face_centers[k][2])
+        part_face_key = "left" # This corresponds to the pjmin plane where the part resides
+
         for key, indices in faces_def.items():
-            if key == "bottom":
+            if key == part_face_key or key == top_face_key:
                 continue
             
             outer_face, inner_face, normal = inner_layer_faces[key]
