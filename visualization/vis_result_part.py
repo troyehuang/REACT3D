@@ -3,10 +3,13 @@ import sys
 import os
 import numpy as np
 
-# result_dir = f"/home/troye/ssd/Zhao_SP/scene2obj/evaluation_data/{scene_id}_ours/perception/final_results"
-# result_dir = f"/home/troye/ssd/Zhao_SP/opdm_code/final_output_multiscan_testset/scene_00091_01_ours"
-result_dir = f"/Users/troyehuang/Desktop/sp/REACT3D/scene_output_filtered"
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--scene_dir', type=str, required=True, help='Path to the output result dir')
+args = parser.parse_args()
+
+result_dir = args.scene_dir
 
 # original_mesh_path = f"/home/troye/ssd/datasets/scannet++/data/{scene_id}/scans/mesh_aligned_0.05.ply"
 # original_mesh = o3d.io.read_triangle_mesh(original_mesh_path)

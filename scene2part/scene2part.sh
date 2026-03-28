@@ -37,7 +37,9 @@ python grounded_sam_detect_doors.py   --config GroundingDINO/groundingdino/confi
 
 cd ${CODE_DIR}/scene2part
 
-python s2p_1_low_fast.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --mesh_path ${data_dir}/mesh_aligned_0.05.ply --num_max_frames 2000 --num_faces_simplified 80000
+# high min_cooccurrence_count can give more robust results when you have high RGBD frame count, but maybe too strict for low frame count
+# suggestion: 3 for low frame count, 5+ for high frame count
+python s2p_1_fast.py --data_dir ${data_dir} --image_dir ${data_dir}/images_2 --mesh_path ${data_dir}/mesh_aligned_0.05.ply --num_max_frames 2000 --num_faces_simplified 80000 --min_cooccurrence_count 3
 
 python s2p_2.py  --data_dir ${data_dir}
 

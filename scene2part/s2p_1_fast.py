@@ -488,6 +488,7 @@ if __name__ == '__main__':
     parser.add_argument('--mesh_path', type=str, required=True)
     parser.add_argument('--num_max_frames', type=int, default=1000)
     parser.add_argument('--num_faces_simplified', type=int, default=80000)
+    parser.add_argument('--min_cooccurrence_count', type=int, default=3, help='Minimum required edge updates to be considered valid')
     args = parser.parse_args()
     mask_dir = os.path.join(args.data_dir, 'grounded_sam')
     pose_path = os.path.join(args.data_dir, 'pose_intrinsic_imu_mvp.json')
@@ -703,7 +704,7 @@ if __name__ == '__main__':
 
         # Vectorized threshold check via sparse matrix lookup
         counts = np.asarray(edge_count_matrix[u_arr, v_arr]).ravel()
-        threshold_mask = counts >= 3
+        threshold_mask = counts >= args.min_cooccurrence_count
         u_f = u_arr[threshold_mask]
         v_f = v_arr[threshold_mask]
         pairs_sample = list(zip(u_f.tolist(), v_f.tolist()))

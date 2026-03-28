@@ -5,9 +5,15 @@ import time
 import viser
 import trimesh
 from scipy.spatial.transform import Rotation as R
+from pathlib import Path
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--scene_dir', type=str, required=True, help='Path to the output result dir')
+args = parser.parse_args()
 
 # ================= Configuration Paths =================
-result_dir = f"/Users/troyehuang/Desktop/sp/REACT3D/scene_output_filtered"
+result_dir = args.scene_dir
 
 # ================= Helper Functions =================
 def create_arrow_from_vector(origin: np.ndarray,
@@ -50,23 +56,28 @@ def create_arrow_from_vector(origin: np.ndarray,
     arrow.translate(origin)
     return arrow
 
+# --- Added: Extract low-level logic for pose updates ---
+def apply_joint_transform(frame_handle, joint_type, origin, axis, val):
+    """Apply the transformation matrix to the Viser Frame handle"""
+    if joint_type == 'rotation':
+        rot = R.from_rotvec(axis * val)
+        scipy_quat = rot.as_quat() # [x, y, z, w]
+        wxyz = (scipy_quat[3], scipy_quat[0], scipy_quat[1], scipy_quat[2])
+        translation = origin - rot.apply(origin)
+        
+        frame_handle.position = translation
+        frame_handle.wxyz = wxyz
+        
+    elif joint_type == 'translation':
+        translation = axis * val
+        frame_handle.position = translation
+        frame_handle.wxyz = (1.0, 0.0, 0.0, 0.0)
+
 def make_joint_callback(frame_handle, joint_type, origin, axis):
     def callback(event: viser.GuiEvent):
         val = event.target.value
-        if joint_type == 'rotation':
-            rot = R.from_rotvec(axis * val)
-            scipy_quat = rot.as_quat() # [x, y, z, w]
-            wxyz = (scipy_quat[3], scipy_quat[0], scipy_quat[1], scipy_quat[2])
-            translation = origin - rot.apply(origin)
-            
-            frame_handle.position = translation
-            frame_handle.wxyz = wxyz
-            
-        elif joint_type == 'translation':
-            translation = axis * val
-            frame_handle.position = translation
-            frame_handle.wxyz = (1.0, 0.0, 0.0, 0.0)
-            
+        # Use the extracted logic
+        apply_joint_transform(frame_handle, joint_type, origin, axis, val)
     return callback
 
 def o3d_to_trimesh(o3d_mesh, default_color=(200, 200, 200)):
@@ -99,6 +110,9 @@ def main():
 
     gui_folder = server.gui.add_folder("Joint Controls")
     gui_sliders = []
+    
+    # --- Added: Save information of all movable parts for animation export ---
+    parts_info = []
 
     # 2. Iterate through all Parts
     for subdir in sorted(os.listdir(result_dir)):
@@ -108,7 +122,7 @@ def main():
 
         ply_file = os.path.join(subdir_path, "part.ply")
         base_ply_file = os.path.join(subdir_path, "base.ply")
-        inner_box_file = os.path.join(subdir_path, "inner_box.obj") # <--- Added: inner_box path
+        inner_box_file = os.path.join(subdir_path, "inner_box.obj")
         
         joint_type_path = os.path.join(subdir_path, 'articulation_type.npy')
         origin_world_path = os.path.join(subdir_path, 'origin_world.npy')
@@ -150,11 +164,9 @@ def main():
             )
 
             # B.2 Mount Inner Box (if exists)
-            # Since it is mounted under the same part_frame, it will automatically move with part.ply when the slider moves
             if os.path.exists(inner_box_file):
                 inner_box_mesh = o3d.io.read_triangle_mesh(inner_box_file)
                 if not inner_box_mesh.is_empty():
-                    # If inner_box does not have its own color, a darker color is given by default (e.g., 100, 100, 100)
                     inner_box_trimesh = o3d_to_trimesh(inner_box_mesh, default_color=(100, 100, 100))
                     server.scene.add_mesh_trimesh(
                         name=f"/scene/{subdir}/part_frame/inner_box",
@@ -169,30 +181,45 @@ def main():
                 vector_world = vec / norm if norm > 0 else vec
                 joint_type = str(np.load(joint_type_path).item())
 
-                # Add visualization arrow
+                # --- Read Range Max ---
+                range_max_path = os.path.join(subdir_path, 'range_max.npy')
+                if os.path.isfile(range_max_path):
+                    motion_range = float(np.load(range_max_path).item()) if joint_type == 'rotation' else 0.5
+                else:
+                    motion_range = np.pi / 2 if joint_type == 'rotation' else 0.5
+
                 arrow_color = (0.8, 0.1, 0.1) if joint_type == 'rotation' else (0.0, 0.0, 1.0)
                 arrow_mesh = create_arrow_from_vector(origin_world, vector_world, color=arrow_color)
                 
-                server.scene.add_mesh_simple(
-                    name=f"/scene/{subdir}/arrow",
-                    vertices=np.asarray(arrow_mesh.vertices),
-                    faces=np.asarray(arrow_mesh.triangles),
-                    color=tuple((np.array(arrow_color) * 255).astype(int))
-                )
+                # uncomment this if you want to see the axis of the joint
+                # server.scene.add_mesh_simple(
+                #     name=f"/scene/{subdir}/arrow",
+                #     vertices=np.asarray(arrow_mesh.vertices),
+                #     faces=np.asarray(arrow_mesh.triangles),
+                #     color=tuple((np.array(arrow_color) * 255).astype(int))
+                # )
 
-                # Add UI sliders
                 with gui_folder:
                     if joint_type == 'rotation':
                         slider = server.gui.add_slider(
-                            f"Rot: {subdir}", min=-np.pi, max=np.pi, step=0.01, initial_value=0.0
+                            f"Rot: {subdir}", min=0.0, max=motion_range, step=0.01, initial_value=0.0
                         )
-                    else:  # translation
+                    else:  
                         slider = server.gui.add_slider(
-                            f"Trans: {subdir}", min=-2.0, max=2.0, step=0.01, initial_value=0.0
+                            f"Trans: {subdir}", min=0.0, max=motion_range, step=0.01, initial_value=0.0
                         )
                         
                     slider.on_update(make_joint_callback(part_frame, joint_type, origin_world, vector_world))
                     gui_sliders.append(slider)
+                    
+                    # --- Added: Record physical and animation info for this part ---
+                    parts_info.append({
+                        'frame': part_frame,
+                        'type': joint_type,
+                        'origin': origin_world,
+                        'axis': vector_world,
+                        'max_val': motion_range # Set the upper limit for the animation amplitude
+                    })
 
     # 3. Add Reset Button
     with gui_folder:
@@ -201,6 +228,41 @@ def main():
         def _(_):
             for s in gui_sliders:
                 s.value = 0.0
+
+        # --- Added: Add export animation button ---
+        export_btn = server.gui.add_button("Export Animation (.viser)")
+        @export_btn.on_click
+        def _(_):
+            print("Starting serialization... Generating animation.")
+            serializer = server.get_scene_serializer()
+            num_frames = 100
+            
+            # Loop to generate animation frames
+            for t in range(num_frames):
+                # Use a periodic function for smooth reciprocating animation
+                phase = (t / num_frames) * 2 * np.pi
+                
+                for info in parts_info:
+                    # Calculate the joint value for the current frame (moves between 0 and max_val)
+                    val = (1.0 - np.cos(phase)) / 2.0 * info['max_val']
+                    # Apply low-level transform logic to update this frame
+                    apply_joint_transform(info['frame'], info['type'], info['origin'], info['axis'], val)
+                
+                # Insert sleep to control the exported animation speed (e.g., 30fps)
+                serializer.insert_sleep(1.0 / 30.0)
+
+            # Save the generated animation file
+            data = serializer.serialize()
+            save_path = Path(result_dir) / "recording.viser"
+            save_path.write_bytes(data)
+            print(f"Animation saved successfully to: {save_path}")
+            
+            # Restore scene after export
+            for s in gui_sliders:
+                s.value = 0.0
+            for info in parts_info:
+                apply_joint_transform(info['frame'], info['type'], info['origin'], info['axis'], 0.0)
+
 
     # Keep the main thread running
     while True:

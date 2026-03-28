@@ -274,7 +274,7 @@ def main():
         jname = joint["name"]
         jtype = joint["type"]
         lower = joint["lower"]
-        upper = joint["upper"]
+        upper = joint["upper"] if joint["type"] == "revolute" else 0.5
 
         label = jname
         if jtype == "revolute":
@@ -347,6 +347,38 @@ def main():
     # Reset button callback
     @reset_button.on_click
     def _(_) -> None:
+        for jname, (slider, joint, jtype) in gui_sliders.items():
+            slider.value = 0.0
+            update_joint(jname, 0.0, joint, jtype)
+
+    export_btn = server.gui.add_button("Export Animation (.viser)")
+    @export_btn.on_click
+    def _(_) -> None:
+        print("Starting serialization... Generating animation.")
+        serializer = server.get_scene_serializer()
+        num_frames = 100
+        
+        for t in range(num_frames):
+            phase = (t / num_frames) * 2 * np.pi
+            
+            for jname, (slider, joint, jtype) in gui_sliders.items():
+                upper = joint["upper"] if jtype == "revolute" else 0.5
+                if jtype == "revolute":
+                    max_val = np.degrees(upper)
+                else: 
+                    max_val = upper
+                    
+                val = (1.0 - np.cos(phase)) / 2.0 * max_val
+                update_joint(jname, val, joint, jtype)
+            
+            serializer.insert_sleep(1.0 / 30.0)
+            
+        data = serializer.serialize()
+        save_path = os.path.join(scene_dir, "recording.viser")
+        with open(save_path, "wb") as f:
+            f.write(data)
+        print(f"Animation saved successfully to: {save_path}")
+        
         for jname, (slider, joint, jtype) in gui_sliders.items():
             slider.value = 0.0
             update_joint(jname, 0.0, joint, jtype)

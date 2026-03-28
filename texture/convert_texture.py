@@ -241,7 +241,7 @@ def process_obj_file(input_mesh_path, texture_size=256):
     # convert_glb_to_obj(output_mesh_path, output_obj_dir)
     # convert_glb_to_obj_with_normals(output_mesh_path, output_obj_dir)
 
-def main(root_dir, texture_size=256):
+def main(root_dir, texture_size=256, remain_texture_size=512):
     for subfolder in tqdm(os.listdir(root_dir)):
         subfolder_path = os.path.join(root_dir, subfolder)
         # if not os.path.isdir(subfolder_path):
@@ -249,7 +249,7 @@ def main(root_dir, texture_size=256):
         # unopenable mesh
         if subfolder == "remain_scene.ply":
             # continue
-            process_obj_file(subfolder_path, 512)
+            process_obj_file(subfolder_path, remain_texture_size)
 
         # openable mesh
         # for inner in os.listdir(subfolder_path):
@@ -273,6 +273,7 @@ if __name__ == '__main__':
     )
     parser.add_argument("--folder", help="opdm scene result folder")
     parser.add_argument("--texture-size", help="resolution of texture", type=int, default=256)
+    parser.add_argument("--remain-texture-size", help="resolution of texture for remain_scene", type=int, default=512)
     
     args = parser.parse_args()
     
@@ -284,7 +285,7 @@ if __name__ == '__main__':
     # start timer
     start_time = time.time()
 
-    main(root_folder, args.texture_size)
+    main(root_folder, args.texture_size, args.remain_texture_size)
 
     # end timer
     end_time = time.time()

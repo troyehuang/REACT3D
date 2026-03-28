@@ -134,6 +134,27 @@ bash simulation_ready.sh
 
 ```
 
+## Visualization Guide
+
+```bash
+cd REACT3D/visualization
+
+# if you want to visualize the output directly after running 
+# part2interactive.sh (without running generate_texture.sh)
+
+# Viser visualization where you can interact with the scene
+python vis_interactive.py --scene_dir <path_to_scene_dir>
+# basic Open3D visualization with joint arrows; this doesn't support manipulation
+python vis_result_part.py --scene_dir <path_to_scene_dir>
+
+# if you want to visualize the simulation ready output by Viser
+# after running generate_texture.sh and simulation_ready.sh
+python vis_interactive_urdf.py --scene_dir <path_to_scene_dir>
+
+# or you can import simulation_ready.sh results into ROS to visualize it
+
+```
+
 ## Progress
 - [x] Project Page online
 - [x] Initial code released
@@ -141,7 +162,7 @@ bash simulation_ready.sh
 - [x] Performance optimization for Scene2Part module
 - [x] Upgrade from LLaVA to Qwen3.5
 - [x] Viser interface
-- [ ] Visualization guide
+- [x] Visualization guide
 - [ ] Texture
 
 ## Acknowledgements

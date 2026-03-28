@@ -485,6 +485,7 @@ if __name__ == '__main__':
     parser.add_argument('--mesh_path', type=str, required=True)
     parser.add_argument('--num_max_frames', type=int, default=1000)
     parser.add_argument('--num_faces_simplified', type=int, default=80000)
+    parser.add_argument('--min_cooccurrence_count', type=int, default=3, help='Minimum required edge updates to be considered valid')
     args = parser.parse_args()
     mask_dir = os.path.join(args.data_dir, 'grounded_sam')
     pose_path = os.path.join(args.data_dir, 'pose_intrinsic_imu_mvp.json')
@@ -615,6 +616,7 @@ if __name__ == '__main__':
 
             binary_mask = binary_erosion(binary_mask, iterations=4)
 
+            # binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).cpu().numpy()
             binary_mask = torchvision.transforms.functional.resize(torch.from_numpy(binary_mask).unsqueeze(0) > 0, (H, W), torchvision.transforms.InterpolationMode.NEAREST).squeeze(0).cpu().numpy()
 
             faces_idxs = triangle_id[binary_mask][valid[binary_mask]].cpu().numpy().astype(np.int32)
@@ -662,7 +664,7 @@ if __name__ == '__main__':
         pairs_sample = []
         for u, v in pairs:
             edge = (u, v)
-            if edge in edge_updates  and edge_updates[edge] >= 5:
+            if edge in edge_updates and edge_updates[edge] >= args.min_cooccurrence_count:
                 pairs_sample.append((u, v))
                 
         Max_P = 1000
@@ -693,7 +695,7 @@ if __name__ == '__main__':
     faces_idxs_list = []
     potential_i = 0
     
-    for res in [1.0, 2.0, 4.0, 5.0, 10.0, 20.0, 35.0, 50.0, 75.0, 100.0, 200.0, 350.0, 500.0]:
+    for res in [0.5, 1.0, 2.0, 4.0, 5.0, 10.0, 20.0, 35.0, 50.0, 75.0, 100.0, 200.0, 350.0, 500.0]:
         partition = nx.community.louvain_communities(G, seed=42, resolution=res)
         parts = []
         for part_idx, faces_idxs in enumerate(partition):
