@@ -129,10 +129,12 @@ bash part2interactive.sh
 cd ../texture
 bash generate_texture.sh
 
+# generate URDF files and ROS files
 cd ../simulation_ready
 bash simulation_ready.sh
 
 ```
+Texture generation is only needed if the input mesh lacks UVs and the simulator lacks vertex color support. It may be slow for the *remain scene* due to the complexity of UV parameterization (via [xatlas](https://github.com/jpcy/xatlas)).
 
 ## Visualization Guide
 
