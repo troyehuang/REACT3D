@@ -20,3 +20,4 @@ pycocotools
 supervision
 pymeshlab==2022.2.post2
 git+https://github.com/xinyu1205/recognize-anything.git
+xatlas

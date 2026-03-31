@@ -4,7 +4,7 @@
 <div align="center">
 <a href="https://react3d.github.io/"><img src="https://img.shields.io/badge/Project_Page-green" alt="Project Page" height="24"></a>
 <a href="https://arxiv.org/abs/2510.11340" target="_blank" rel="noopener noreferrer"> <img src="https://img.shields.io/badge/Paper-VGGT" alt="Paper PDF" height="24"></a>
-<!-- <a href="https://drive.google.com/file/d/1PuDanf0JnpyCRtiurPIESG80pU_nEBIj/view"> <img src="https://img.shields.io/badge/Demo-blue" alt="Demo"></a> -->
+<a href="https://react3d.github.io/#interactive-demo"> <img src="https://img.shields.io/badge/Demo-blue" alt="Demo" height="24"></a>
 
 <p>
     <a href="https://troyehuang.github.io/">Zhao Huang</a>   
@@ -163,7 +163,7 @@ python vis_interactive_urdf.py --scene_dir <path_to_scene_dir>
 - [x] Upgrade from LLaVA to Qwen3.5
 - [x] Viser interface
 - [x] Visualization guide
-- [ ] Texture
+- [x] Texture
 
 ## Acknowledgements
 Our work is based on [OPDMulti](https://github.com/3dlg-hcvc/OPDMulti) and [DRAWER](https://github.com/xiahongchi/DRAWER). We thank the authors for their great work and open-sourcing the code.
