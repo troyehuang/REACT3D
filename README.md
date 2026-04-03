@@ -178,9 +178,9 @@ If you find our work useful, please consider citing:
   journal={IEEE Robotics and Automation Letters}, 
   title={REACT3D: Recovering Articulations for Interactive Physical 3D Scenes}, 
   year={2026},
-  volume={},
-  number={},
-  pages={1-8},
+  volume={11},
+  number={5},
+  pages={5954-5961},
   keywords={Three-dimensional displays;Joints;Geometry;Image reconstruction;Estimation;Solid modeling;Point cloud compression;Foundation models;Biological system modeling;Accuracy;Semantic scene understanding;object detection;segmentation and categorization;RGB-D perception},
   doi={10.1109/LRA.2026.3674028}
 }
